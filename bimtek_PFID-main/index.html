@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Pre &amp; Post Test BIMTEK eMonitoring DAK</title>
+<meta name="description" content="Pre-test dan post-test daring peserta Bimbingan Teknis aplikasi eMonitoring DAK. Masuk dengan akun daerah, tunggu aba-aba panitia, lalu kerjakan bersama-sama." />
+<meta name="theme-color" content="#f2f6fc" />
+<link rel="icon" href="assets/lambang-emondak.png" />
+<link rel="apple-touch-icon" href="assets/lambang-emondak.png" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════════
+     BERANDA — hero satu layar penuh, latar langit cerah
+     ══════════════════════════════════════════════════════════════ -->
+<section class="hero" id="beranda">
+
+  <!-- latar video hanya dipasang bila KONFIG.videoHero diisi -->
+  <video class="hero-video" muted loop playsinline preload="none" hidden></video>
+
+  <!-- lapisan latar cerah: gradasi langit, awan lembut, kisi tipis -->
+  <div class="lapis-langit"></div>
+  <div class="lapis-awan"></div>
+  <div class="lapis-grid"></div>
+  <div class="cahaya-bawah"></div>
+
+  <!-- kilau kecil -->
+  <span class="bintang b1"></span>
+  <span class="bintang b2"></span>
+  <span class="bintang b3"></span>
+  <span class="bintang b4"></span>
+  <span class="bintang b5"></span>
+  <span class="bintang b6"></span>
+
+  <!-- ── navbar ── -->
+  <nav class="navbar">
+    <a class="merek" href="#/" aria-label="Beranda Pre &amp; Post Test BIMTEK eMonitoring DAK">
+      <img class="merek-lambang" src="assets/lambang-emondak.png" width="44" height="47"
+           alt="Lambang eMonitoring DAK" />
+      <img class="merek-logo" src="assets/logo-emondak.png" width="447" height="349"
+           alt="eMonitoring DAK — Pemantauan Dana Alokasi Khusus" />
+    </a>
+
+    <div class="nav-kanan">
+      <a href="#/cara">Cara Ikut</a>
+      <a href="#/peringkat">Peringkat</a>
+      <a href="#/admin">Admin</a>
+      <a href="#/bantuan">Bantuan</a>
+      <a class="tombol-kaca" href="#/akun">Masuk</a>
+    </div>
+  </nav>
+
+  <!-- ── isi hero ── -->
+  <div class="hero-isi">
+    <div class="ornamen">
+      <span class="garis kiri"></span>
+      <span class="bintang-glif">✦</span>
+      <span class="garis kanan"></span>
+    </div>
+
+    <h1 class="judul-hero">Uji Kesiapan <span>Operator DAK</span></h1>
+
+    <a class="tombol-utama" href="#/akun" id="tombolMulai">
+      Mulai Tes
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M4 12h15"></path>
+        <path d="M13.5 5.5 20 12l-6.5 6.5"></path>
+      </svg>
+    </a>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════
+     HALAMAN LAIN — diisi oleh assets/app.js
+     ══════════════════════════════════════════════════════════════ -->
+<main id="halaman" class="halaman" hidden></main>
+
+<div id="pitaLokal" class="pita-lokal" hidden>MODE LOKAL — data hanya tersimpan di peramban ini</div>
+
+<script src="assets/konfig.js"></script>
+<script src="assets/firebase-config.js"></script>
+<script src="assets/wilayah.js"></script>
+<script src="assets/soal.js"></script>
+<script src="assets/xlsx.js"></script>
+<script src="assets/data.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>
