@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EmonDAK - Admin Dashboard</title>
+    
+    <!-- Memuat Tailwind CSS untuk styling yang cepat dan responsif -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Memuat Font Awesome untuk ikon-ikon pada UI -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { 
+            font-family: 'Inter', sans-serif; 
+        }
+        
+        /* Kustomisasi Scrollbar agar terlihat elegan */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        /* Animasi sederhana untuk transisi halaman */
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { 
+            from { opacity: 0; transform: translateY(10px); } 
+            to { opacity: 1; transform: translateY(0); } 
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 h-screen overflow-hidden flex">
+
+    <!-- SIDEBAR -->
+    <aside class="w-64 bg-slate-900 text-white flex flex-col shadow-xl z-20 hidden md:flex">
+        <div class="p-6 flex items-center gap-3 border-b border-slate-700">
+            <div class="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center font-bold text-xl shadow-lg">
+                E
+            </div>
+            <div>
+                <h1 class="font-bold text-lg leading-tight tracking-wide">EmonDAK</h1>
+                <p class="text-xs text-slate-400 font-medium">Bimtek PFID Admin</p>
+            </div>
+        </div>
+        
+        <nav class="flex-1 p-4 space-y-2 mt-4">
+            <!-- Tombol Navigasi Tab Soal -->
+            <button onclick="switchTab('soal')" id="tab-soal" class="w-full flex items-center gap-3 px-4 py-3 bg-blue-600 rounded-lg transition-all shadow-md text-left text-sm font-medium">
+                <i class="fas fa-file-alt w-5 text-center"></i> Bank Soal Pre-Test
+            </button>
+            
+            <!-- Tombol Navigasi Tab Users -->
+            <button onclick="switchTab('users')" id="tab-users" class="w-full flex items-center gap-3 px-4 py-3 text-slate-300 hover:bg-slate-800 hover:text-white rounded-lg transition-all text-left text-sm font-medium">
+                <i class="fas fa-users w-5 text-center"></i> Manajemen User
+            </button>
+        </nav>
+        
+        <div class="p-4 border-t border-slate-700 text-xs text-slate-500 text-center">
+            &copy; 2026 Portal FID
+        </div>
+    </aside>
+
+    <!-- KONTEN UTAMA -->
+    <main class="flex-1 flex flex-col h-full relative overflow-hidden">
+        
+        <!-- HEADER -->
+        <header class="bg-white shadow-sm border-b border-gray-200 px-6 py-4 flex justify-between items-center z-10">
+            <div class="flex items-center gap-4">
+                <!-- Tombol menu untuk mobile (opsional/visual) -->
+                <button class="md:hidden text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-bars text-xl"></i>
+                </button>
+                <h2 id="page-title" class="text-xl font-bold text-gray-800">Bank Soal Pre-Test</h2>
+            </div>
+            
+            <div class="flex items-center gap-3 bg-gray-50 px-3 py-1.5 rounded-full border border-gray-200 cursor-pointer hover:bg-gray-100 transition">
+                <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-sm">
+                    A
+                </div>
+                <span class="text-sm font-semibold text-gray-700 pr-2">Admin PFID</span>
+            </div>
+        </header>
+
+        <!-- AREA KONTEN SCROLLABLE -->
+        <div class="flex-1 overflow-y-auto p-6 md:p-8 relative w-full">
+            
+            <!-- TAB: SOAL PRE-TEST -->
+            <div id="view-soal" class="fade-in max-w-5xl mx-auto space-y-6">
+                <!-- Banner Informasi -->
+                <div class="bg-blue-50 border-l-4 border-blue-500 text-blue-800 p-4 rounded-r-lg shadow-sm flex gap-3 text-sm">
+                    <i class="fas fa-info-circle mt-0.5 text-blue-600 text-lg"></i>
+                    <div>
+                        <p class="font-semibold mb-1">Informasi Pembaruan Data</p>
+                        <p>Daftar soal di bawah ini telah disinkronkan dengan dokumen terbaru. Posisi pilihan jawaban (A, B, C, D) <strong>diacak secara otomatis</strong> setiap kali halaman dimuat ulang menggunakan algoritma <em>Fisher-Yates</em>.</p>
+                    </div>
+                </div>
+                
+                <!-- Kontainer tempat soal akan dirender oleh JavaScript -->
+                <div id="soal-container" class="space-y-6">
+                    <!-- Soal akan disisipkan di sini -->
+                </div>
+            </div>
+
+            <!-- TAB: MANAJEMEN USER -->
+            <div id="view-users" class="hidden fade-in max-w-6xl mx-auto">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    
+                    <!-- Header Tabel & Pencarian -->
+                    <div class="p-6 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-gray-50/50">
+                        <div>
+                            <h3 class="text-lg font-bold text-gray-800">Daftar Pendaftar Bimtek</h3>
+                            <p class="text-sm text-gray-500 mt-1">Kelola data peserta yang terdaftar pada sistem EmonDAK.</p>
+                        </div>
+                        <div class="relative w-full sm:w-64">
+                            <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                            <input type="text" placeholder="Cari user..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-shadow">
+                        </div>
+                    </div>
+                    
+                    <!-- Tabel Data User -->
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-gray-50 border-b border-gray-200 text-gray-500 text-xs uppercase tracking-wider">
+                                    <th class="px-6 py-4 font-semibold">Nama Peserta</th>
+                                    <th class="px-6 py-4 font-semibold">Email</th>
+                                    <th class="px-6 py-4 font-semibold">Asal Daerah / OPD</th>
+                                    <th class="px-6 py-4 font-semibold">Status Pre-Test</th>
+                                    <th class="px-6 py-4 font-semibold text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="users-tbody" class="text-sm divide-y divide-gray-100 bg-white">
+                                <!-- Baris tabel akan disisipkan di sini oleh JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL KONFIRMASI HAPUS USER -->
+        <!-- Kita tidak menggunakan alert() atau confirm() bawaan browser demi UX yang lebih baik -->
+        <div id="delete-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm hidden flex items-center justify-center z-50 transition-opacity duration-300 opacity-0">
+            <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md transform scale-95 transition-transform duration-300" id="modal-content">
+                
+                <div class="flex flex-col items-center justify-center">
+                    <div class="flex items-center justify-center w-16 h-16 rounded-full bg-red-100 text-red-500 mb-5">
+                        <i class="fas fa-trash-alt text-2xl"></i>
+                    </div>
+                    
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">Hapus Pengguna?</h3>
+                    <p class="text-center text-gray-500 text-sm mb-6 leading-relaxed">
+                        Anda yakin ingin menghapus peserta <br>
+                        <strong id="delete-target-name" class="text-gray-800 text-base"></strong>?<br>
+                        Tindakan ini permanen dan data yang dihapus tidak dapat dipulihkan.
+                    </p>
+                    
+                    <div class="flex gap-3 w-full">
+                        <button onclick="closeDeleteModal()" class="flex-1 px-4 py-2.5 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-semibold rounded-xl transition-colors">
+                            Batal
+                        </button>
+                        <button id="btn-confirm-delete" class="flex-1 px-4 py-2.5 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-xl transition-colors shadow-sm shadow-red-200">
+                            Ya, Hapus
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TOAST NOTIFICATION -->
+        <div id="toast" class="fixed bottom-6 right-6 bg-gray-900 text-white px-6 py-4 rounded-xl shadow-2xl transform transition-all duration-300 translate-y-20 opacity-0 z-50 flex items-center gap-3">
+            <i class="fas fa-check-circle text-green-400 text-xl"></i>
+            <div>
+                <h4 class="font-bold text-sm" id="toast-title">Sukses</h4>
+                <p class="text-xs text-gray-300" id="toast-message">Tindakan berhasil dilakukan.</p>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // =====================================================================
+        // 1. DATA BANK SOAL (Sesuai dokumen "SOAL PRE TEST EMONDAK New.docx")
+        // =====================================================================
+        // Catatan: Kunci jawaban (a) selalu bernilai 0 di array awal ini, 
+        // yang merujuk pada index pertama dari array opsi (o). 
+        // Algoritma Fisher-Yates nanti akan mengacak urutan 'o' saat ditampilkan.
+        const soalPreTest = [
+            {
+                q: "Bagaimana cara mengakses aplikasi eMonitoring DAK?",
+                o: [
+                    "Mengakses halaman website Portal FID > EmonDAK",
+                    "Mengakses halaman website Portal FID > SIPDJD",
+                    "Mengirimkan formulir permohonan akses data secara fisik setiap kali ingin membuka aplikasi.",
+                    "Mengunduh aplikasi eMonitoring DAK terlebih dahulu melalui Google Play Store atau App Store di smartphone masing-masing"
+                ],
+                a: 0 // Index 0 adalah jawaban benar sebelum diacak
+            },
+            {
+                q: "Dua data (credentials) apa yang wajib diisi pada form Login portal depan EmonDAK?",
+                o: [
+                    "Username dan Password",
+                    "NIK dan Nomor Kartu Keluarga",
+                    "Nama Lengkap dan Asal Daerah",
+                    "Alamat Email dan Nomor Telepon"
+                ],
+                a: 0
+            },
+            {
+                q: "Di menu manakah Anda menginput informasi mengenai status tender atau pelelangan kegiatan?",
+                o: [
+                    "Menu Status PBJ (Pengadaan Barang/Jasa)",
+                    "Dashboard Utama",
+                    "Menu Tenaga Kerja",
+                    "Menu Realisasi Keuangan"
+                ],
+                a: 0
+            },
+            {
+                q: "Pada fitur apa anda disarankan untuk rutin melakukan pembaharuan demi menjaga keamanan akun EmonDAK Anda?",
+                o: [
+                    "Kata Sandi (Password)",
+                    "Foto Profil",
+                    "Alamat Rumah",
+                    "Nomor Rekening Bank"
+                ],
+                a: 0
+            },
+            {
+                q: "Menu apa yang WAJIB diisi pertama kali saat baru login agar fitur pelaporan lainnya dapat terbuka?",
+                o: [
+                    "Menu Data OPD (Organisasi Perangkat Daerah)",
+                    "Menu Unggah Foto",
+                    "Menu Realisasi Keuangan",
+                    "Menu Helpdesk"
+                ],
+                a: 0
+            },
+            {
+                q: "Fitur bantuan apa yang disediakan di dalam aplikasi untuk terhubung langsung dengan pusat jika operator menemui kendala atau error?",
+                o: [
+                    "Button Helpdesk via WhatsApp",
+                    "Kolom komentar publik",
+                    "Surat fisik ke kantor",
+                    "Call center darurat"
+                ],
+                a: 0
+            },
+            {
+                q: "Pada Menu Data OPD hal apa yang Wajib di isi?",
+                o: [
+                    "Nama Petugas/Operator",
+                    "Realisasi Keuangan",
+                    "Foto Kegiatan",
+                    "PHO/BAST"
+                ],
+                a: 0
+            },
+            {
+                q: "Apakah Anda sudah mengetahui batas waktu (deadline) penginputan data realisasi DAK di aplikasi EmonDAK?",
+                o: [
+                    "Sebulan Sekali Maksimal 7 Hari dari bulan berkenaan;",
+                    "Seminggu Sekali di bulan berkenaan;",
+                    "Per Semester Maksimal 7 Hari dari bulan berkenaan; dan",
+                    "Per Triwulan Maksimal di akhir bulan."
+                ],
+                a: 0
+            },
+            {
+                q: "Berapa ukuran maksimal file foto progres yang dapat diunggah ke sistem?",
+                o: [
+                    "10 MB",
+                    "5 MB",
+                    "20 MB",
+                    "Tanpa batasan ukuran"
+                ],
+                a: 0
+            },
+            {
+                q: "Berapa persentase foto progres kegiatan yang wajib diunggah?",
+                o: [
+                    "0%, 50%, dan 100%",
+                    "100% saja",
+                    "50% dan 100%",
+                    "25%, 50%, 75%, dan 100%"
+                ],
+                a: 0
+            },
+            {
+                q: "Format file apa yang diwajibkan oleh sistem untuk dokumen lampiran seperti Kontrak, DED, dan RAB?",
+                o: [
+                    "PDF (.pdf)",
+                    "Word (.doc)",
+                    "Excel (.xls)",
+                    "Gambar (.jpg)"
+                ],
+                a: 0
+            },
+            {
+                q: "Angka realisasi penyerapan keuangan di dalam aplikasi wajib mengacu pada dokumen apa?",
+                o: [
+                    "Nilai SP2D (Surat Perintah Pencairan Dana) yang sudah cair",
+                    "Rencana Anggaran Biaya (RAB)",
+                    "Kuitansi pembelian material",
+                    "Estimasi/tebakan kontraktor"
+                ],
+                a: 0
+            },
+            {
+                q: "Jika terjadi perubahan desain atau volume pekerjaan (adendum), dokumen apa yang wajib diunggah?",
+                o: [
+                    "Justifikasi Teknis",
+                    "Kuitansi toko",
+                    "Surat Izin Usaha",
+                    "Foto lokasi baru"
+                ],
+                a: 0
+            },
+            {
+                q: "Jika dokumen PDF DED yang akan diunggah ukurannya 30 MB (melebihi batas sistem), apa langkah yang harus dilakukan?",
+                o: [
+                    "Mengompresi file PDF (PDF Compressor) menjadi ukuran yang lebih kecil",
+                    "Menghapus seluruh gambar dalam dokumen",
+                    "Mengirim file lewat pos",
+                    "Memotret layar komputer"
+                ],
+                a: 0
+            },
+            {
+                q: "Fitur apa yang digunakan untuk melaporkan manfaat atau fungsi infrastruktur yang dibangun pada tahun sebelumnya?",
+                o: [
+                    "Output & Immediate Outcome",
+                    "Menu Input OPD",
+                    "Status PBJ",
+                    "Profil Pengguna"
+                ],
+                a: 0
+            },
+            {
+                q: "Format file apakah yang diwajibkan oleh sistem saat Anda menggunakan fitur 'Unggah Dokumen Kontrak'?",
+                o: [
+                    "PDF (.pdf)",
+                    "Word (.doc)",
+                    "Excel (.xls)",
+                    "Gambar (.jpg)"
+                ],
+                a: 0
+            },
+            {
+                q: "Jika suatu paket pekerjaan dijalankan secara Swakelola, dokumen apa yang diunggah pada kolom Dokumen Kontrak?",
+                o: [
+                    "SK Tim Pengelola Swakelola / SPK Swakelola",
+                    "Kuitansi beli semen",
+                    "Foto gotong royong",
+                    "Dikosongkan saja"
+                ],
+                a: 0
+            },
+            {
+                q: "Kolom dokumen apa yang wajib diisi dan diunggah pada sistem apabila terjadi perubahan desain atau volume pekerjaan di lapangan (adendum)?",
+                o: [
+                    "Kolom Justifikasi Teknis (Adendum)",
+                    "Kolom DED",
+                    "Kolom SPK",
+                    "Kolom Berita Acara Rapat"
+                ],
+                a: 0
+            },
+            {
+                q: "Apa fungsi utama tombol 'Simpan' (Save) setelah mengetik angka progres di aplikasi?",
+                o: [
+                    "Memastikan data tersimpan dan tidak hilang saat pindah halaman",
+                    "Mengunci laporan secara permanen",
+                    "Mencetak laporan ke printer",
+                    "Keluar dari aplikasi"
+                ],
+                a: 0
+            },
+            {
+                q: "Dalam penulisan angka Nilai Kontrak di sistem, bagaimana format yang benar?",
+                o: [
+                    "Mengetik nominal angka pasti tanpa spasi/titik (contoh: 1500000)",
+                    "Menggunakan huruf (contoh: Satu Juta Rupiah)",
+                    "Dibulatkan secara acak",
+                    "Diisi angka 0 dulu"
+                ],
+                a: 0
+            },
+            {
+                q: "Siapa yang bertanggung jawab penuh atas kebenaran dan keabsahan seluruh data yang dilaporkan di EmonDAK?",
+                o: [
+                    "Pemerintah Daerah (Pemda)",
+                    "Admin Helpdesk",
+                    "Pengembang aplikasi",
+                    "Tim Verifikator Pusat"
+                ],
+                a: 0
+            },
+            {
+                q: "Dalam fitur pengisian Nilai Kontrak, bagaimana format penulisan angka yang benar di dalam sistem?",
+                o: [
+                    "Mengetik nominal angka pasti tanpa spasi atau titik (contoh: 1500000)",
+                    "Menggunakan huruf (contoh: Satu Juta Rupiah)",
+                    "Dibulatkan ke angka terdekat",
+                    "Diisi angka 0 terlebih dahulu"
+                ],
+                a: 0
+            },
+            {
+                q: "Apabila kegiatan fisik di lapangan sudah selesai 100%, dokumen apakah yang wajib diunggah ke dalam sistem?",
+                o: [
+                    "PHO / BAST (Berita Acara Serah Terima)",
+                    "Surat Permohonan Dana",
+                    "Kuitansi Toko Material",
+                    "Foto KTP Kontraktor"
+                ],
+                a: 0
+            },
+            {
+                q: "Pada sub-menu 'Data Tenaga Kerja', data utama apakah yang wajib dilaporkan oleh operator daerah?",
+                o: [
+                    "Jumlah tenaga kerja lokal yang terserap pada kegiatan tersebut",
+                    "Nama lengkap seluruh tukang bangunan",
+                    "Besar gaji harian mandor",
+                    "Daftar hadir PNS di dinas"
+                ],
+                a: 0
+            },
+            // --- SOAL ANTI KORUPSI ---
+            {
+                q: "UU Tipikor yang tetap menjadi rujukan utama, dengan beberapa ketentuan telah disesuaikan dalam KUHP Nasional, adalah…",
+                o: [
+                    "UU Nomor 31 Tahun 1999 yang diubah dengan UU Nomor 20 Tahun 2001",
+                    "UU Nomor 5 Tahun 2014",
+                    "UU Nomor 25 Tahun 2009",
+                    "UU Nomor 14 Tahun 2008"
+                ],
+                a: 0
+            },
+            {
+                q: "Manakah yang termasuk tujuh kelompok tindak pidana korupsi?",
+                o: [
+                    "Suap-menyuap, pemerasan, dan gratifikasi",
+                    "Keterlambatan, ketidakhadiran, dan pemborosan",
+                    "Pelanggaran parkir, kecelakaan, dan pencemaran",
+                    "Perselisihan, kelalaian, dan kesalahan ketik"
+                ],
+                a: 0
+            },
+            {
+                q: "Pengusaha menawarkan uang kepada pejabat agar memenangkan tender. Perbuatan ini termasuk…",
+                o: [
+                    "Suap",
+                    "Gratifikasi yang boleh diterima",
+                    "Hadiah biasa",
+                    "Sumbangan sosial"
+                ],
+                a: 0
+            },
+            {
+                q: "Menurut Peraturan KPK terbaru, berapa batas nilai kado pernikahan yang tidak wajib dilaporkan dari setiap pemberi?",
+                o: [
+                    "Maksimal Rp1.500.000",
+                    "Maksimal Rp5.000.000",
+                    "Maksimal Rp10.000.000",
+                    "Tidak ada batas nilai"
+                ],
+                a: 0
+            },
+            {
+                q: "Rekan kerja memberi hadiah ulang tahun. Agar tidak wajib dilaporkan menurut aturan terbaru, ketentuan yang tepat adalah…",
+                o: [
+                    "Bukan uang/alat tukar, maksimal Rp500.000 per pemberian, dan total Rp1.500.000 setahun dari pemberi yang sama",
+                    "Boleh berupa uang maksimal Rp2.000.000",
+                    "Boleh berapa pun selama diberikan di kantor",
+                    "Harus selalu diterima agar tidak menyinggung pemberi"
+                ],
+                a: 0
+            }
+        ];
+
+        // =====================================================================
+        // 2. DATA DUMMY USER & STATE VARIABLES
+        // =====================================================================
+        let users = [
+            { id: "USR-001", nama: "Budi Santoso", email: "budi.s@jakarta.go.id", opd: "Dinas PUPR - DKI Jakarta", status: "Selesai", score: 85, avatar: "BS" },
+            { id: "USR-002", nama: "Siti Aminah", email: "siti.a@jabar.go.id", opd: "Dinas Kesehatan - Jawa Barat", status: "Belum", score: null, avatar: "SA" },
+            { id: "USR-003", nama: "I Wayan Koster", email: "wayan@bali.go.id", opd: "Dinas Pendidikan - Bali", status: "Selesai", score: 90, avatar: "WK" },
+            { id: "USR-004", nama: "Andi Mallarangeng", email: "andi@sulsel.go.id", opd: "Bappeda - Sulawesi Selatan", status: "Progress", score: null, avatar: "AM" },
+            { id: "USR-005", nama: "Cut Nyak Dien", email: "cut.nd@aceh.go.id", opd: "Dinas Perkim - Aceh", status: "Selesai", score: 95, avatar: "CN" }
+        ];
+
+        // Menyimpan ID user yang akan dihapus saat modal terbuka
+        let userIdToDelete = null;
+
+        // =====================================================================
+        // 3. FUNGSI LOGIKA (SHUFFLE & RENDER)
+        // =====================================================================
+        
+        /**
+         * Mengacak elemen array menggunakan algoritma Fisher-Yates Shuffle
+         * Sangat direkomendasikan untuk pengacakan soal/jawaban karena distribusinya merata.
+         */
+        function shuffleArray(array) {
+            let currentIndex = array.length, randomIndex;
+            
+            // Selama masih ada elemen yang tersisa untuk diacak...
+            while (currentIndex !== 0) {
+                // Pilih elemen yang tersisa secara acak
+                randomIndex = Math.floor(Math.random() * currentIndex);
+                currentIndex--;
+                
+                // Tukar (swap) elemen tersebut dengan elemen saat ini
+                [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+            }
+            return array;
+        }
+
+        /**
+         * Render soal ke antarmuka dan acak posisi jawabannya.
+         */
+        function renderSoal() {
+            const container = document.getElementById('soal-container');
+            container.innerHTML = ''; // Bersihkan container
+            
+            soalPreTest.forEach((item, index) => {
+                // 1. Petakan opsi ke dalam array object baru agar kita ingat mana jawaban yang benar
+                // sebelum posisinya diacak.
+                let optionsWithMeta = item.o.map((optText, optIdx) => ({
+                    text: optText,
+                    originalIndex: optIdx,
+                    isCorrect: item.a === optIdx // True jika index ini adalah kunci jawaban
+                }));
+
+                // 2. ACAK URUTAN JAWABAN MENGGUNAKAN FISHER-YATES
+                optionsWithMeta = shuffleArray(optionsWithMeta);
+
+                // 3. Bangun HTML untuk opsi jawaban (A, B, C, D)
+                let optionsHtml = '';
+                const labels = ['A', 'B', 'C', 'D'];
+                
+                optionsWithMeta.forEach((optMeta, newIdx) => {
+                    const isCorrect = optMeta.isCorrect;
+                    
+                    // Styling dinamis: Hijau jika benar, Abu-abu jika salah (Hanya untuk preview Admin)
+                    const borderClass = isCorrect ? 'border-green-300 bg-green-50/50' : 'border-gray-200 bg-white hover:bg-gray-50';
+                    const labelClass = isCorrect ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500';
+                    const textClass = isCorrect ? 'text-green-800 font-semibold' : 'text-gray-600';
+                    
+                    optionsHtml += `
+                        <div class="flex items-start gap-4 p-4 rounded-xl border ${borderClass} transition-colors">
+                            <span class="flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-lg text-sm font-bold ${labelClass}">${labels[newIdx]}</span>
+                            <span class="${textClass} mt-0.5 leading-relaxed">${optMeta.text}</span>
+                            ${isCorrect ? '<i class="fas fa-check-circle text-green-500 ml-auto mt-1" title="Kunci Jawaban"></i>' : ''}
+                        </div>
+                    `;
+                });
+
+                // 4. Bangun HTML untuk pembungkus 1 Soal penuh
+                const html = `
+                    <div class="bg-white p-6 md:p-8 rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                        <div class="flex gap-4 mb-6">
+                            <span class="flex-shrink-0 bg-blue-600 text-white font-bold w-10 h-10 flex justify-center items-center rounded-xl text-sm shadow-md">${index + 1}</span>
+                            <h4 class="font-bold text-gray-800 text-lg leading-relaxed pt-1">${item.q}</h4>
+                        </div>
+                        <div class="pl-0 md:pl-14 grid grid-cols-1 md:grid-cols-2 gap-4">
+                            ${optionsHtml}
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += html;
+            });
+        }
+
+        /**
+         * Render tabel pengguna ke antarmuka.
+         */
+        function renderUsers() {
+            const tbody = document.getElementById('users-tbody');
+            tbody.innerHTML = ''; // Bersihkan tabel
+
+            if(users.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="px-6 py-12 text-center text-gray-500">
+                            <div class="flex flex-col items-center justify-center">
+                                <i class="fas fa-folder-open text-4xl text-gray-300 mb-3"></i>
+                                <p>Tidak ada data pengguna terdaftar.</p>
+                            </div>
+                        </td>
+                    </tr>`;
+                return;
+            }
+
+            users.forEach(user => {
+                // Tentukan style badge status
+                let statusBadge = '';
+                if(user.status === 'Selesai') {
+                    statusBadge = `<span class="inline-flex items-center gap-1.5 px-3 py-1 bg-green-50 text-green-700 border border-green-200 rounded-full text-xs font-bold"><i class="fas fa-check"></i> Lulus (${user.score})</span>`;
+                }
+                else if(user.status === 'Belum') {
+                    statusBadge = `<span class="inline-flex items-center gap-1.5 px-3 py-1 bg-gray-50 text-gray-600 border border-gray-200 rounded-full text-xs font-bold"><i class="fas fa-clock"></i> Belum Mulai</span>`;
+                }
+                else {
+                    statusBadge = `<span class="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-blue-700 border border-blue-200 rounded-full text-xs font-bold"><i class="fas fa-spinner fa-spin"></i> Progress</span>`;
+                }
+
+                // Bangun HTML Baris Tabel
+                tbody.innerHTML += `
+                    <tr class="hover:bg-gray-50/80 transition-colors group">
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-9 h-9 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-xs font-bold shrink-0">
+                                    ${user.avatar}
+                                </div>
+                                <div>
+                                    <p class="font-bold text-gray-900">${user.nama}</p>
+                                    <p class="text-xs text-gray-400 font-mono mt-0.5">${user.id}</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-gray-500">${user.email}</td>
+                        <td class="px-6 py-4">
+                            <span class="bg-gray-100 text-gray-600 px-2.5 py-1 rounded-md text-xs font-medium border border-gray-200">
+                                ${user.opd}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4">${statusBadge}</td>
+                        <td class="px-6 py-4 text-center">
+                            <button onclick="openDeleteModal('${user.id}')" class="w-9 h-9 rounded-lg bg-white border border-gray-200 text-gray-400 hover:border-red-200 hover:bg-red-50 hover:text-red-500 transition-all shadow-sm focus:outline-none" title="Hapus Pengguna">
+                                <i class="fas fa-trash-alt text-sm"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        // =====================================================================
+        // 4. EVENT LISTENERS & UI CONTROLS
+        // =====================================================================
+        
+        /**
+         * Berpindah antar tab (Soal vs Users)
+         */
+        function switchTab(tabId) {
+            // Gaya visual dasar untuk tombol tidak aktif
+            const inactiveClass = "w-full flex items-center gap-3 px-4 py-3 text-slate-300 hover:bg-slate-800 hover:text-white rounded-lg transition-all text-left text-sm font-medium";
+            // Gaya visual untuk tombol aktif
+            const activeClass = "w-full flex items-center gap-3 px-4 py-3 bg-blue-600 text-white rounded-lg transition-all shadow-md text-left text-sm font-medium";
+            
+            // Reset state
+            document.getElementById('tab-soal').className = inactiveClass;
+            document.getElementById('tab-users').className = inactiveClass;
+            document.getElementById('view-soal').classList.add('hidden');
+            document.getElementById('view-users').classList.add('hidden');
+
+            // Aktifkan tab yang dipilih
+            if(tabId === 'soal') {
+                document.getElementById('tab-soal').className = activeClass;
+                document.getElementById('page-title').innerText = "Bank Soal Pre-Test";
+                document.getElementById('view-soal').classList.remove('hidden');
+            } else {
+                document.getElementById('tab-users').className = activeClass;
+                document.getElementById('page-title').innerText = "Manajemen Pendaftar Bimtek";
+                document.getElementById('view-users').classList.remove('hidden');
+            }
+        }
+
+        /**
+         * Membuka Custom Modal Konfirmasi Hapus
+         */
+        function openDeleteModal(id) {
+            userIdToDelete = id; // Simpan ID user ke memori
+            const user = users.find(u => u.id === id); // Cari detail user
+            
+            // Update teks di dalam modal
+            document.getElementById('delete-target-name').innerText = user.nama;
+            
+            const modal = document.getElementById('delete-modal');
+            const content = document.getElementById('modal-content');
+            
+            // Tampilkan backdrop
+            modal.classList.remove('hidden');
+            // Sedikit delay (10ms) agar transisi CSS berjalan dari display:none ke flex
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                content.classList.remove('scale-95');
+                content.classList.add('scale-100');
+            }, 10);
+        }
+
+        /**
+         * Menutup Custom Modal Konfirmasi Hapus
+         */
+        function closeDeleteModal() {
+            userIdToDelete = null; // Bersihkan memori
+            
+            const modal = document.getElementById('delete-modal');
+            const content = document.getElementById('modal-content');
+            
+            // Mainkan animasi keluar (reverse)
+            modal.classList.add('opacity-0');
+            content.classList.remove('scale-100');
+            content.classList.add('scale-95');
+            
+            // Tunggu animasi CSS selesai (300ms) baru sembunyikan elemennya
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        }
+
+        /**
+         * Menampilkan Toast Notifikasi (menggantikan alert)
+         */
+        function showToast(title, message) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-title').innerText = title;
+            document.getElementById('toast-message').innerText = message;
+            
+            // Animasi masuk (muncul dari bawah)
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            
+            // Otomatis hilang setelah 3.5 detik
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3500);
+        }
+
+        /**
+         * Event Listener untuk tombol "Ya, Hapus" di dalam modal
+         */
+        document.getElementById('btn-confirm-delete').addEventListener('click', () => {
+            if (userIdToDelete) {
+                // 1. Eksekusi Hapus: Filter array dan buang user yang ID-nya cocok
+                // (Pada implementasi nyata, di sini Anda memanggil API Fetch/Axios ke server Backend)
+                const userDeleted = users.find(u => u.id === userIdToDelete);
+                users = users.filter(u => u.id !== userIdToDelete);
+                
+                // 2. Render ulang tabel dengan data terbaru
+                renderUsers();
+                
+                // 3. Tutup Modal
+                closeDeleteModal();
+                
+                // 4. Tampilkan Notifikasi Sukses
+                showToast("Pengguna Dihapus", `Data peserta ${userDeleted.nama} berhasil dihapus dari sistem.`);
+            }
+        });
+
+        // =====================================================================
+        // 5. INISIALISASI APLIKASI
+        // =====================================================================
+        // Menjalankan fungsi render saat halaman web selesai dimuat
+        window.onload = () => {
+            renderSoal();
+            renderUsers();
+        };
+    </script>
+</body>
+</html>
